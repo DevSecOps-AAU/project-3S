@@ -76,6 +76,40 @@ def home():
         result = recommend_places(query, top_n)
     return render_template('home.html', result=result)
 
+
+@app.route('/recommended')
+def index():
+    return render_template("Recommended.html")
+
+@app.route('/login')
+def login():
+    return render_template("login.html")
+
+@app.route('/login-process', methods=["POST"])
+def login_process():
+    if requests.methods == "POST":
+        email=request.form("email")
+        password=request.form("password")
+        row = services.login(email,password)
+        if not row:
+            return redirect(url_for("login"))
+    return redirect(url_for("index"))
+@app.route('/register')
+def register():
+    return render_template("register.html")
+
+@app.route('/register-process', methods=["POST"])
+def register_process():
+    if requests.methods == "POST":
+        user_name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        row = services.register(name, email, password)
+        if not row:
+            return redirect(url_for("register"))
+        return redirect(url_for("login"))
+
+
 # -----------------------------
 # Run the app
 # -----------------------------
