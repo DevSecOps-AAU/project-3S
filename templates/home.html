@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tourism Recommendation</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 40px;
+            color: #333;
+        }
+
+        h1 {
+            color: #007bff;
+            text-align: center;
+        }
+
+        form {
+            background: #fff;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 30px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        @media (max-width: 600px) {
+            form {
+                padding: 15px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Tourism Recommendation App</h1>
+
+    <form method="POST">
+        <label>Enter Country or City:</label>
+        <input type="text" name="query" required>
+
+        <label>Number of Recommendations:</label>
+        <input type="number" name="top_n" value="5" min="1">
+
+        <button type="submit">Get Recommendations</button>
+
+        <h2>{{ result.message }}</h2>
+
+        {% if result.data %}
+            <table>
+                <tr>
+                    <th>Place Name</th>
+                    <th>Country</th>
+                    <th>City</th>
+                    <th>Category</th>
+                </tr>
+                {% for item in result.data %}
+                <tr>
+                    <td>{{ item['Place Name'] }}</td>
+                    <td>{{ item['Country'] }}</td>
+                    <td>{{ item['City'] }}</td>
+                    <td>{{ item['Category'] }}</td>
+                    {% if item.get('similarity') %}
+                    <td>{{ "%.3f"|format(item['similarity']) }}</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </form>
+</body>
+</html>

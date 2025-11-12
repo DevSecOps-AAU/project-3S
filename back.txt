@@ -1,0 +1,69 @@
+
+from flask import Flask, request, jsonify, render_template
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import regex as re
+ 
+# Step 1: Load dataset
+df = pd.read_csv('data.csv')
+ 
+# Step 2: Prepare data
+df['text'] = df['City'] + ' ' + df['Category'] 
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform(df['text'])
+df['embedding'] = [vec.toarray()[0] for vec in tfidf_matrix]
+
+# Step 3: Recommendation function
+def recommend_places(query, top_n=5):
+    query_lower = query.lower()
+    filtered_df = df[df['Country'].str.lower() == query_lower]
+ 
+    # If no match by country, try City
+    if filtered_df.empty:
+        filtered_df = df[df['City'].str.lower() == query_lower]
+ 
+    # Fallback 1: Empty or blank query
+    if query == "" or re.fullmatch(r'\s*', query):
+        return {'message': ' Please provide a valid country or city name.', 'data': []}
+ 
+    # Fallback 2: No matches — show top-rated global destinations
+    if filtered_df.empty:
+        print(f"No destinations found for '{query}'. Showing top-rated global destinations instead.")
+        top_global = df.sort_values(by='Rating', ascending=False).head(top_n)
+
+        return {
+            'message': f"No results for '{query}'. Showing top-rated global destinations instead.",
+            'data': top_global[['Place Name', 'Country', 'Category', 'Rating']].to_dict(orient='records')
+        }
+ 
+    # Compute similarity
+    embeddings = np.vstack(filtered_df['embedding'].values)
+    similarity_matrix = cosine_similarity(embeddings)
+    similarity_scores = similarity_matrix.mean(axis=1)
+    filtered_df = filtered_df.copy()
+    filtered_df['similarity'] = similarity_scores
+    results = filtered_df.sort_values(by='similarity', ascending=False).head(top_n)
+
+    return {
+        'message': f"Top {top_n} recommendations for '{query}':",
+        'data': results[['Place Name', 'Country', 'City', 'Category', 'similarity']].to_dict(orient='records')
+    }
+ 
+# Step 4: Flask App
+app = Flask(__name__) 
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        query = request.form.get('query', '')
+        top_n = int(request.form.get('top_n', 5))
+        result = recommend_places(query, top_n)
+        return render_template('results.html', result=result)
+    return render_template('home.html')
+
+
+# Run the app
+if __name__ == '__main__ ':
+    app.run(debug=True)
+
